@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComAI Watch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #030291;
+            --accent-cyan: #05ddf7;
+            --accent-purple: #9508df;
+            --accent-magenta: #b615c2;
+            --accent-pink: #f963fb;
+            --accent-bright-blue: #0000fb;
+            --black: #000000;
+            --white: #ffffff;
+            --light-bg: #f8f9fa;
+            --gray-text: #4a4a4a;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--white);
+            color: var(--gray-text);
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 4rem;
+            background: var(--white);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(3, 2, 145, 0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            font-size: 1rem;
+            color: var(--gray-text);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-blue);
+        }
+
+        h1 {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .share-btn {
+            padding: 0.75rem 2rem;
+            background: var(--primary-blue);
+            border: none;
+            color: var(--white);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+        }
+
+        .share-btn:hover {
+            background: var(--accent-bright-blue);
+        }
+
+        /* Main Container */
+        .main-container {
+            margin-top: 100px;
+            padding: 2rem 4rem;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Visualization View */
+        .viz-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+
+        #bubble-canvas {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            border: 2px solid var(--gray-text);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            opacity: 0;
+            animation: fadeIn 0.6s ease forwards;
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .bubble:hover {
+            transform: scale(1.05);
+            border-color: var(--primary-blue);
+            z-index: 100 !important;
+        }
+
+        .bubble-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            text-align: center;
+            padding: 0.5rem 0.8rem;
+            pointer-events: none;
+            z-index: 2;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.2;
+            max-width: 90%;
+            word-wrap: break-word;
+            hyphens: auto;
+        }
+
+        .bubble-count {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            font-family: 'Space Mono', monospace;
+            margin-top: 0.5rem;
+        }
+
+        /* Timeline */
+        .timeline-container {
+            background: var(--primary-blue);
+            padding: 3rem 4rem;
+            margin: 0 -4rem -2rem -4rem;
+        }
+
+        .timeline-text {
+            color: var(--white);
+            font-size: 1.3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+        }
+
+        .timeline-text .highlight {
+            color: var(--white);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .slider-wrapper {
+            position: relative;
+            padding: 1rem 0;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            color: var(--white);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            font-family: 'Space Mono', monospace;
+            padding: 0;
+            position: relative;
+        }
+
+        .slider-labels .year {
+            position: absolute;
+            transform: translateX(-50%);
+        }
+
+        .slider-labels .year:nth-child(1) {
+            left: 0%;
+        }
+
+        .slider-labels .year:nth-child(2) {
+            left: 33.33%;
+        }
+
+        .slider-labels .year:nth-child(3) {
+            left: 66.67%;
+        }
+
+        .slider-labels .year:nth-child(4) {
+            left: 100%;
+        }
+
+        .slider-labels .future {
+            opacity: 0.15;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            outline: none;
+            -webkit-appearance: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--white);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--white);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* List View */
+        .list-view {
+            display: none;
+        }
+
+        .list-view.active {
+            display: block;
+        }
+
+        .list-header {
+            background: var(--white);
+            border-bottom: 3px solid var(--primary-blue);
+            color: var(--primary-blue);
+            padding: 2rem 4rem;
+            margin: -2rem -4rem 2rem -4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--primary-blue);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+        }
+
+        .back-btn:hover {
+            color: var(--accent-cyan);
+        }
+
+        .list-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.8rem;
+            color: var(--primary-blue);
+        }
+
+        .list-title .category-name {
+            color: var(--accent-cyan);
+        }
+
+        .list-controls {
+            background: transparent;
+            padding: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin: 0 0 2rem 0;
+        }
+
+        .filter-btn {
+            border: 2px solid;
+            background: transparent;
+            padding: 0.6rem 1.2rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .filter-btn.features {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .filter-btn.features:hover {
+            background: rgba(5, 221, 247, 0.1);
+        }
+
+        .filter-btn.focus-areas {
+            border-color: var(--accent-magenta);
+            color: var(--accent-magenta);
+        }
+
+        .filter-btn.focus-areas:hover {
+            background: rgba(182, 21, 194, 0.1);
+        }
+
+        .sort-label {
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .company-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .company-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid rgba(3, 2, 145, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .company-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(3, 2, 145, 0.1);
+            border-color: rgba(3, 2, 145, 0.3);
+        }
+
+        .company-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .external-link {
+            color: var(--accent-cyan);
+            font-size: 1rem;
+        }
+
+        .company-date {
+            color: var(--gray-text);
+            font-size: 0.9rem;
+            opacity: 0.7;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .keyword-badge {
+            padding: 0.4rem 0.9rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            background: transparent;
+        }
+
+        .keyword-badge.feature {
+            color: var(--accent-cyan);
+            border: 1.5px solid var(--accent-cyan);
+        }
+
+        .keyword-badge.focus-area {
+            color: var(--accent-magenta);
+            border: 1.5px solid var(--accent-magenta);
+        }
+
+        .cta-box {
+            background: var(--white);
+            border: 2px solid var(--accent-magenta);
+            padding: 3rem;
+            text-align: center;
+            color: var(--gray-text);
+            border-radius: 8px;
+            margin-top: 3rem;
+        }
+
+        .cta-box h3 {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .cta-btn {
+            background: var(--accent-magenta);
+            color: var(--white);
+            border: none;
+            padding: 0.9rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            background: var(--accent-purple);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <h1>The automation of communication in health and social care</h1>
+    </nav>
+
+    <div class="main-container">
+        <!-- Visualization View -->
+        <div id="viz-view">
+            <div class="viz-container">
+                <div id="bubble-canvas"></div>
+            </div>
+            
+            <div class="timeline-container">
+                <div class="timeline-text">
+                    We tracked a total of <span class="highlight" id="company-count">9</span> ComAI companies and start-ups by <span class="highlight" id="current-year">2025</span>.
+                </div>
+                <div class="slider-wrapper">
+                    <div class="slider-labels">
+                        <span class="year">2025</span>
+                        <span class="year">2026</span>
+                        <span class="year future">2027</span>
+                        <span class="year future">2028</span>
+                    </div>
+                    <input type="range" id="timeline-slider" min="2025" max="2028" value="2025" step="1">
+                </div>
+            </div>
+        </div>
+
+        <!-- List View -->
+        <div id="list-view" class="list-view">
+            <div class="list-header">
+                <button class="back-btn" onclick="showVizView()">
+                    <span>←</span> Home
+                </button>
+                <div class="list-title">
+                    <span class="category-name" id="category-display">All companies and start-ups</span> in <span id="sphere-display">Education</span>
+                </div>
+                <div></div>
+            </div>
+
+            <div class="list-controls">
+                <button class="filter-btn features">Features</button>
+                <button class="filter-btn focus-areas">Application focus area(s)</button>
+            </div>
+
+            <div class="company-list" id="company-list"></div>
+
+            <div class="cta-box">
+                <h3>Help us grow this overview<br>comai@uni-graz.at</h3>
+                <button class="cta-btn" onclick="window.location.href='mailto:comai@uni-graz.at'">Mail us</button>
+            </div>
+        </div>
+    </div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        // Real data from ComAI Watch
+        const data = {
+            categories: [
+                {
+                    name: "Monitoring and prompting",
+                    companies: [
+                        { 
+                            name: "Kintsugi Health - Kintsugi Voice", 
+                            year: 2025, 
+                            url: "https://www.kintsugihealth.com/solutions/kintsugivoice", 
+                            features: ["biomarker analysis"],
+                            focus_areas: ["mental health"]
+                        },
+                        { 
+                            name: "Callyope", 
+                            year: 2026, 
+                            url: "https://www.callyope.com/", 
+                            features: ["biomarker analysis", "medical coding"],
+                            focus_areas: ["mental health"]
+                        },
+                        { 
+                            name: "TQ Intelligence", 
+                            year: 2025, 
+                            url: "https://www.tqintelligence.com/", 
+                            features: ["biomarker analysis", "ambient ComAI"],
+                            focus_areas: ["mental health"]
+                        },
+                        { 
+                            name: "Signal Fusion", 
+                            year: 2025, 
+                            url: "https://www.signalfusion.ai/", 
+                            features: ["biomarker analysis", "ambient ComAI"],
+                            focus_areas: []
+                        },
+                        { 
+                            name: "Reden Lab", 
+                            year: 2025, 
+                            url: "https://redenlab.com/", 
+                            features: ["biomarker analysis"],
+                            focus_areas: ["neurological"]
+                        },
+                        { 
+                            name: "Winterlight Labs", 
+                            year: 2025, 
+                            url: "https://winterlightlabs.com/", 
+                            features: ["biomarker analysis"],
+                            focus_areas: ["dementia", "mental health"]
+                        },
+                        { 
+                            name: "Colive Voice", 
+                            year: 2026, 
+                            url: "https://www.colivevoice.org/en/", 
+                            features: ["biomarker analysis"],
+                            focus_areas: ["diabetes"]
+                        },
+                        { 
+                            name: "Theodor Health - Heart & Lung Sound AI", 
+                            year: 2025, 
+                            url: "https://theodorhealth.com/en/heart-lung-sound-ai/", 
+                            features: ["auscultation assistant", "biomarker analysis"],
+                            focus_areas: ["cardiovascular"]
+                        },
+                        { 
+                            name: "Wysa", 
+                            year: 2025, 
+                            url: "https://www.wysa.com/#15", 
+                            features: ["conversational ComAI", "self-help", "track progress", "assign homework"],
+                            focus_areas: ["mental health"]
+                        }
+                    ]
+                },
+                {
+                    name: "Assessing predictive health risks",
+                    companies: [
+                        { 
+                            name: "TQ Intelligence", 
+                            year: 2025, 
+                            url: "https://www.tqintelligence.com/", 
+                            features: ["biomarker analysis", "ambient ComAI"],
+                            focus_areas: ["mental health"]
+                        },
+                        { 
+                            name: "Amplifier Health", 
+                            year: 2025, 
+                            url: "https://www.amplifierhealth.com/", 
+                            features: ["biomarker analysis"],
+                            focus_areas: ["cardiovascular", "respiratory", "neurological"]
+                        },
+                        { 
+                            name: "Colive Voice", 
+                            year: 2026, 
+                            url: "https://www.colivevoice.org/en/", 
+                            features: ["biomarker analysis"],
+                            focus_areas: ["diabetes"]
+                        },
+                        { 
+                            name: "Theodor Health - Heart & Lung Sound AI", 
+                            year: 2025, 
+                            url: "https://theodorhealth.com/en/heart-lung-sound-ai/", 
+                            features: ["auscultation assistant", "biomarker analysis"],
+                            focus_areas: ["cardiovascular"]
+                        },
+                        { 
+                            name: "Ada Health", 
+                            year: 2025, 
+                            url: "https://ada.com/de/", 
+                            features: ["conversational ComAI", "care coordinator"],
+                            focus_areas: []
+                        }
+                    ]
+                },
+                {
+                    name: "Offering therapeutic advice",
+                    companies: [
+                        { 
+                            name: "Wysa", 
+                            year: 2025, 
+                            url: "https://www.wysa.com/#15", 
+                            features: ["conversational ComAI", "self-help", "track progress", "assign homework"],
+                            focus_areas: ["mental health"]
+                        },
+                        { 
+                            name: "Nyra Health - MyReha", 
+                            year: 2025, 
+                            url: "https://www.nyra.health/myreha", 
+                            features: ["conversational ComAI", "interactive language exercises"],
+                            focus_areas: ["neurological"]
+                        }
+                    ]
+                },
+                {
+                    name: "Triaging needs",
+                    companies: [
+                        { 
+                            name: "Ada Health", 
+                            year: 2025, 
+                            url: "https://ada.com/de/", 
+                            features: ["conversational ComAI", "care coordinator"],
+                            focus_areas: []
+                        }
+                    ]
+                },
+                {
+                    name: "Offering health information",
+                    companies: [
+                        { 
+                            name: "Ada Health", 
+                            year: 2025, 
+                            url: "https://ada.com/de/", 
+                            features: ["conversational ComAI", "care coordinator"],
+                            focus_areas: []
+                        },
+                        { 
+                            name: "ChatGPT Health", 
+                            year: 2026, 
+                            url: "https://openai.com/de-DE/index/introducing-chatgpt-health/", 
+                            features: ["chatbot", "connect health data"],
+                            focus_areas: ["wellness and health"]
+                        }
+                    ]
+                },
+                {
+                    name: "Care coordination",
+                    companies: [
+                        { 
+                            name: "Lena", 
+                            year: 2025, 
+                            url: "https://www.lena.io/", 
+                            features: ["conversational ComAI", "enroll patients", "documentation"],
+                            focus_areas: []
+                        },
+                        { 
+                            name: "LinkLive", 
+                            year: 2025, 
+                            url: "https://linklive.ai/", 
+                            features: ["conversational ComAI", "inbound & outbound calls"],
+                            focus_areas: []
+                        },
+                        { 
+                            name: "Simbie.ai", 
+                            year: 2025, 
+                            url: "https://www.simbie.ai/", 
+                            features: ["conversational ComAI", "inbound & outbound calls (proactively)", "EMR Agent"],
+                            focus_areas: []
+                        },
+                        { 
+                            name: "Sheer Health", 
+                            year: 2026, 
+                            url: "https://www.sheerhealth.com/", 
+                            features: ["conversational ComAI"],
+                            focus_areas: ["health insurance"]
+                        }
+                    ]
+                },
+                {
+                    name: "Companionship",
+                    companies: [
+                        { 
+                            name: "ElliQ", 
+                            year: 2025, 
+                            url: "https://elliq.com/", 
+                            features: ["multimodal", "medication reminders", "pain tracking", "exercise suggestions"],
+                            focus_areas: ["older adults", "wellness and health", "communication and social connection", "companionship and entertainment"]
+                        }
+                    ]
+                },
+                {
+                    name: "Cultural and inclusive representation",
+                    companies: [
+                        { 
+                            name: "Voiceitt", 
+                            year: 2025, 
+                            url: "https://www.voiceitt.com/", 
+                            features: ["accessible speech-to-text input"],
+                            focus_areas: ["speech disabilities", "older adults", "accented speakers"]
+                        }
+                    ]
+                },
+                {
+                    name: "Coaching based on lived experience",
+                    companies: [
+                        { 
+                            name: "Lenovo - Photorealistic AI Avatar for Alzheimer's & Dementia", 
+                            year: 2025, 
+                            url: "https://news.lenovo.com/pressroom/press-releases/photorealistic-ai-avatar-companion-alzheimers-dementia/", 
+                            features: ["graphic ComAI"],
+                            focus_areas: ["alzheimer", "dementia"]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        let currentYear = 2025;
+        let currentCategory = null;
+
+        // Filter companies by year
+        function filterCompaniesByYear(companies, year) {
+            return companies.filter(company => company.year <= year);
+        }
+
+        // Calculate bubble size - all bubbles same size now
+        function getBubbleSize(count) {
+            return 120; // All bubbles same size
+        }
+
+        // Calculate inner dot size based on company count
+        function getInnerDotSize(count) {
+            const minSize = 15;  // Minimum dot size (1 company) - reduced from 30
+            const maxSize = 90;  // Maximum dot size (9+ companies)
+            const maxCount = 9;
+            const normalized = Math.min(count, maxCount) / maxCount;
+            return minSize + (maxSize - minSize) * normalized;
+        }
+
+        // Calculate glow intensity based on company count
+        function getGlowIntensity(count) {
+            const minOpacity = 0.15;
+            const maxOpacity = 0.45;
+            const normalized = Math.min(count, 6) / 6;
+            return minOpacity + (maxOpacity - minOpacity) * normalized;
+        }
+
+        // Find which categories share companies
+        function findSharedCompanies(categories) {
+            const shared = [];
+            
+            for (let i = 0; i < categories.length; i++) {
+                for (let j = i + 1; j < categories.length; j++) {
+                    const cat1 = categories[i];
+                    const cat2 = categories[j];
+                    
+                    const sharedCompanies = cat1.companies.filter(c1 => 
+                        cat2.companies.some(c2 => c2.name === c1.name)
+                    );
+                    
+                    if (sharedCompanies.length > 0) {
+                        shared.push({
+                            index1: i,
+                            index2: j,
+                            cat1Name: cat1.name,
+                            cat2Name: cat2.name,
+                            companies: sharedCompanies.map(c => c.name)
+                        });
+                    }
+                }
+            }
+            
+            return shared;
+        }
+
+        // Position bubbles with overlap for shared companies
+        function positionBubbles(categories) {
+            const canvas = document.getElementById('bubble-canvas');
+            const width = canvas.offsetWidth;
+            const height = canvas.offsetHeight;
+            const positions = [];
+            
+            // Create base grid positions
+            const cols = 3;
+            const rows = Math.ceil(categories.length / cols);
+            const cellWidth = width / cols;
+            const cellHeight = height / rows;
+            
+            categories.forEach((category, index) => {
+                const row = Math.floor(index / cols);
+                const col = index % cols;
+                
+                const x = col * cellWidth + cellWidth / 2;
+                const y = row * cellHeight + cellHeight / 2;
+                
+                positions.push({
+                    x: x,
+                    y: y,
+                    size: category.size
+                });
+            });
+            
+            return positions;
+        }
+
+        // Render bubbles
+        function renderBubbles() {
+            const canvas = document.getElementById('bubble-canvas');
+            canvas.innerHTML = '';
+            
+            // Filter and prepare data
+            const categoriesWithCounts = data.categories.map(cat => {
+                const filteredCompanies = filterCompaniesByYear(cat.companies, currentYear);
+                return {
+                    ...cat,
+                    count: filteredCompanies.length,
+                    size: getBubbleSize(filteredCompanies.length),
+                    companies: filteredCompanies
+                };
+            }).filter(cat => cat.count > 0);
+            
+            const positions = positionBubbles(categoriesWithCounts);
+            
+            // Calculate color intensity based on company count
+            function getColorIntensity(count) {
+                const minOpacity = 0.4;  // Lightest (1 company) - increased from 0.15
+                const maxOpacity = 0.75;  // Darkest (9+ companies) - increased from 0.45
+                const maxCount = 9;
+                const normalized = Math.min(count, maxCount) / maxCount;
+                return minOpacity + (maxOpacity - minOpacity) * normalized;
+            }
+            
+            // Sort bubbles by count so darker ones appear on top
+            const sortedIndices = categoriesWithCounts.map((_, i) => i)
+                .sort((a, b) => categoriesWithCounts[a].count - categoriesWithCounts[b].count);
+            
+            sortedIndices.forEach(index => {
+                const category = categoriesWithCounts[index];
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                const pos = positions[index];
+                const size = category.size;
+                const innerDotSize = getInnerDotSize(category.count);
+                
+                // No gradient on the bubble itself - it's just white with border
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${pos.x - size/2}px`;
+                bubble.style.top = `${pos.y - size/2}px`;
+                bubble.style.animationDelay = `${index * 0.05}s`;
+                bubble.style.zIndex = 10 + category.count;
+                
+                // Create inner colored dot with cyan color scheme
+                const innerDot = document.createElement('div');
+                innerDot.style.position = 'absolute';
+                innerDot.style.width = `${innerDotSize}px`;
+                innerDot.style.height = `${innerDotSize}px`;
+                innerDot.style.borderRadius = '50%';
+                innerDot.style.background = `radial-gradient(circle at center, 
+                    rgba(5, 218, 247, 0.7) 0%, 
+                    rgba(5, 218, 247, 0.5) 50%,
+                    rgba(5, 218, 247, 0.2) 80%,
+                    transparent 100%)`;
+                innerDot.style.top = '50%';
+                innerDot.style.left = '50%';
+                innerDot.style.transform = 'translate(-50%, -50%)';
+                innerDot.style.pointerEvents = 'none';
+                innerDot.style.zIndex = '1';
+                
+                // Only show label, no count number
+                bubble.innerHTML = `
+                    <div class="bubble-label" style="position: relative; z-index: 2;">${category.name}</div>
+                `;
+                
+                bubble.insertBefore(innerDot, bubble.firstChild);
+                bubble.onclick = () => showListView(category.name);
+                canvas.appendChild(bubble);
+            });
+            
+            // Update company count text - count unique companies only
+            const uniqueCompanies = new Set();
+            categoriesWithCounts.forEach(cat => {
+                cat.companies.forEach(company => {
+                    uniqueCompanies.add(company.name);
+                });
+            });
+            document.getElementById('company-count').textContent = uniqueCompanies.size;
+        }
+
+        // Show list view
+        function showListView(categoryName) {
+            currentCategory = categoryName;
+            const category = data.categories.find(cat => cat.name.toLowerCase() === categoryName.toLowerCase());
+            const filteredCompanies = filterCompaniesByYear(category.companies, currentYear)
+                .sort((a, b) => b.year - a.year);
+            
+            document.getElementById('viz-view').style.display = 'none';
+            document.getElementById('list-view').classList.add('active');
+            document.getElementById('sphere-display').textContent = category.name;
+            
+            const listContainer = document.getElementById('company-list');
+            listContainer.innerHTML = '';
+            
+            filteredCompanies.forEach(company => {
+                const card = document.createElement('div');
+                card.className = 'company-card';
+                
+                let keywordsHTML = '';
+                const hasFeatures = company.features && company.features.length > 0;
+                const hasFocusAreas = company.focus_areas && company.focus_areas.length > 0;
+                
+                if (hasFeatures || hasFocusAreas) {
+                    const featuresHTML = hasFeatures ? 
+                        company.features.map(f => `<span class="keyword-badge feature">${f}</span>`).join('') : '';
+                    const focusAreasHTML = hasFocusAreas ? 
+                        company.focus_areas.map(fa => `<span class="keyword-badge focus-area">${fa}</span>`).join('') : '';
+                    
+                    keywordsHTML = `
+                        <div class="keywords">
+                            ${featuresHTML}
+                            ${focusAreasHTML}
+                        </div>
+                    `;
+                }
+                
+                card.innerHTML = `
+                    <div class="company-name">
+                        ${company.name}
+                        <span class="external-link">↗</span>
+                    </div>
+                    <div class="company-date">Added: ${company.year}</div>
+                    ${keywordsHTML}
+                `;
+                card.onclick = () => window.open(company.url, '_blank');
+                listContainer.appendChild(card);
+            });
+        }
+
+        // Show visualization view
+        function showVizView() {
+            document.getElementById('viz-view').style.display = 'block';
+            document.getElementById('list-view').classList.remove('active');
+            currentCategory = null;
+        }
+
+        // Timeline slider handler
+        document.getElementById('timeline-slider').addEventListener('input', (e) => {
+            currentYear = parseInt(e.target.value);
+            document.getElementById('current-year').textContent = currentYear;
+            renderBubbles();
+        });
+
+        // Initial render
+        renderBubbles();
+
+        // Handle window resize
+        window.addEventListener('resize', renderBubbles);
+    </script>
+</body>
+</html>
